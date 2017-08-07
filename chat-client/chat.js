@@ -54,8 +54,10 @@ class Message {
 $(document).ready(function() {
     // launchWelcomeIntent();
     login_form.on('submit', function(event) {
-      signInHandler();
       event.preventDefault();
+    });
+    signin_btn.click(function(event) {
+      signInHandler();
     });
     msg_input.keyup(function(event) {
       if (event.which == 13) {
@@ -88,14 +90,14 @@ const signInHandler = () => {
     surname: last_name,
     email: email
   };
+  console.log(user);
   Auth.signInWithEmailAndPassword(email, pass)
   .then(function(user){
-    console.log('User successfully created')
+    console.log('User successfully created');
     switchToChatUI();
   }).catch(function(error) {
     var errorCode = error.code;
     var errorMessage = error.message;
-    // [START_EXCLUDE]
     if (errorCode === 'auth/wrong-password') {
       alert('Wrong password.');
     } else if (errorCode === 'auth/user-not-found') {
@@ -192,13 +194,8 @@ function sendAndUpdateChat(text) {
             addTextToChatHistory("Internal Server Error", true);
         }
     });
-    // setResponse("Loading...");
 }
 
-// const animateResponseIsBeingTyped = _ => {
-  
-
-// }
 
 const uuidv4 = _ => {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>

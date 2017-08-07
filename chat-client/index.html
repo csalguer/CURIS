@@ -2,8 +2,11 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
     <title>API.AI FrontEnd Example</title>
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
     <!-- Latest Libraries -->
+    <link href="https://fonts.googleapis.com/css?family=Nunito|Open+Sans" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="chat.css">
     <!-- For Hosting on Firebase -->
@@ -15,10 +18,14 @@
     <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase-database.js"></script>
     <script>
+      // Initialize Firebase
       var config = {
         apiKey: "AIzaSyC3oRlTdABh5jhom8ATX80inDK00FrpHp0",
-        authDomain: "stressed-chatbot.firebaseapp.com",
-        databaseURL: "https://stressed-chatbot.firebaseio.com"
+        authDomain: "localhost",
+        databaseURL: "https://stressed-chatbot.firebaseio.com",
+        projectId: "stressed-chatbot",
+        storageBucket: "stressed-chatbot.appspot.com",
+        messagingSenderId: "200930512094"
       };
       firebase.initializeApp(config);
     </script>
@@ -42,7 +49,7 @@
         </div>
         <div class="title">Chat</div>
       </div>
-      <img src="img/logo.png" id="logo">
+      <img src="img/chatbot-logo-teal.png" id="logo">
       <div class="login_wrapper">
         <h1>Login to the study with your name and email</h1>
         <br>
@@ -53,7 +60,10 @@
           <br>
           <input type="text" id="user_email" placeholder="Email Address">
           <br>
-          <input type="submit" id="signin" value="ENTER">
+          <div id="signin">
+            <div class="icon"></div>
+            <div class="text">CHECK IN</div>
+          </div>
         </form>
       </div>
       <h6>NOTE: We only use your information to track your participation in the study across multiple sessions.</h6>
@@ -80,7 +90,6 @@
         </div>
       </div>
     </div>
-
     <div class="message_template">
       <li class="message">
         <div class="avatar"></div>
