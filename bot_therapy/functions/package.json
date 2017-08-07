@@ -1,0 +1,26 @@
+{
+  "name": "bot-therapy",
+  "description": "Chat agent targeting stress with different strategies.",
+  "version": "0.0.1",
+  "license": "Apache Version 2.0",
+  "author": "Christopher Salguero",
+  "private": true,
+  "engines": {
+    "node": "~4.2"
+  },
+  "dependencies": {
+    "actions-on-google": "^1.0.0",
+    "debug": "^2.6.8",
+    "firebase": "^3.7.2",
+    "firebase-admin": "~4.2.1",
+    "firebase-functions": "^0.5.7"
+  },
+  "devDependencies": {
+    "semistandard": "^9.1.0"
+  },
+  "scripts": {
+    "lint": "semistandard --fix \"**/*.js\"",
+    "start": "firebase serve --only functions",
+    "deploy": "firebase deploy --only functions"
+  }
+}
