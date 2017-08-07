@@ -1,21 +1,8 @@
 var accessToken = "b55278df9fd8448aa8be3d804d80209d";
 var baseUrl = "https://api.api.ai/v1/";
-var Auth = firebase.auth();
-var Database = firebase.database();
+// var Database = firebase.database();
 var message_side = 'right';
 var currentSession;
-var login_form = $('#login_form'),
-    signin_btn = $('#signin')
-    user_first_name = $('#user_fname'),
-    user_last_name = $('#user_lname'),
-    user_email = $('#user_email'),
-    chat_window = $('.chat_window'),
-    login_window = $('.login_window'),
-    msg_template = $('.message_template'),
-    msg_list = $('.messages'),
-    msg_input = $('.message_input'),
-    send_msg_btn = $('.send_message')
-
 
 class Message {
     constructor(text, message_side){
@@ -30,13 +17,13 @@ class Message {
 
 
     draw(){
-        let templateClone = msg_template.clone().html();
+        let templateClone = $('.message_template').clone().html();
         let msg_elem = $(templateClone);
         msg_elem.addClass(this.message_side).find('.text').html(this.isCurrentlyTyping ? '' : this.text);
         if(this.isCurrentlyTyping && this.message_side === 'left'){
           msg_elem.find('.texting_indicator').addClass('appeared').show();
         } 
-        msg_list.append(msg_elem);
+        $('.messages').append(msg_elem);
         return setTimeout(function() {
           return msg_elem.addClass('appeared');
         }, 0); // Consider adding a consistent time for bot responses to look less immediate
@@ -53,13 +40,28 @@ class Message {
  */
 $(document).ready(function() {
     // launchWelcomeIntent();
-    login_form.on('submit', function(event) {
+    // $(document).on("click", "#signin", function(){
+    //   signInHandler();
+    // });
+
+    // Handle User Login for 3-Day studies
+    $('#login_form').on('submit', function(event) {
       event.preventDefault();
-    });
-    signin_btn.click(function(event) {
       signInHandler();
     });
-    msg_input.keyup(function(event) {
+    $('#signin').click(function(event) {
+      event.preventDefault();
+      signInHandler();
+    });
+    $('#user_email').keyup(function(event) {
+      if (event.which == 13){
+        event.preventDefault();
+        signInHandler();
+      }
+    });
+
+    // Handle Chat UI interactions
+    $('.message_input').keyup(function(event) {
       if (event.which == 13) {
         event.preventDefault();
         var user_input = getUserInput();
@@ -68,7 +70,7 @@ $(document).ready(function() {
         sendAndUpdateChat(user_input);
       }
     });
-    send_msg_btn.click(function(event) {
+    $('.send_message').click(function(event) {
       var user_input = getUserInput();
       setTimeout(addTextToChatHistory(user_input, false), 300);
       setUserInput('');
@@ -79,11 +81,11 @@ $(document).ready(function() {
 
 const signInHandler = () => {
   console.log('signInHandler');
-  let first_name = $.trim(user_fname.val());
-  let last_name = $.trim(user_lname.val());
+  let first_name = $('#user_fname').val();
+  let last_name = $('#user_lname').val();
   if(first_name < 1){ alert('First name must be longer than 1 character'); return;}
   if(last_name < 1){ alert('Last name must be longer than 1 character'); return;}
-  let email = user_email.val();
+  let email = $('#user_email').val();
   let pass = last_name.toLowerCase() + first_name.toLowerCase() + email.split('@')[0];
   let user = {
     name: first_name,
@@ -91,7 +93,7 @@ const signInHandler = () => {
     email: email
   };
   console.log(user);
-  Auth.signInWithEmailAndPassword(email, pass)
+  firebase.auth().signInWithEmailAndPassword(email, pass)
   .then(function(user){
     console.log('User successfully created');
     switchToChatUI();
@@ -101,7 +103,7 @@ const signInHandler = () => {
     if (errorCode === 'auth/wrong-password') {
       alert('Wrong password.');
     } else if (errorCode === 'auth/user-not-found') {
-      createWrapper(user, pass); //Might have to rework code-example since promise based
+      createUserHandler(user, pass); //Might have to rework code-example since promise based
       return;
     } else {
       alert(errorMessage);
@@ -111,8 +113,8 @@ const signInHandler = () => {
   });
 };
 
-const createUserWrapper = (userObj, pass) => {
-  Auth.createUserWithEmailAndPassword(userObj.email, pass)
+const createUserHandler = (userObj, pass) => {
+  firebase.auth().createUserWithEmailAndPassword(userObj.email, pass)
   .then(function(user){
     switchToChatUI();
   }).catch(function(error) {
@@ -129,25 +131,26 @@ const createUserWrapper = (userObj, pass) => {
 
 
 const switchToChatUI = () => {
-  login_window.hide();
-  chat_window.show();
+  $('.login_window').hide();
+  $('.chat_window').show();
+  launchWelcomeIntent();
 };
 
 const initClientApp = () => {
-  if(Auth.currentUser) {
-    Auth().signOut();
+  if(firebase.auth().currentUser) {
+    firebase.auth().signOut();
   }
 };
 
 const getUserInput = () => {
-    return msg_input.val()
+    return $('.message_input').val();
 };
 const setUserInput = text => {
-    msg_input.val(text);
+    $('.message_input').val(text);
 };
 
 const toggleIndicatorAndDisplayIncoming = text => {
-  let lastMessageSent = msg_list.children().last();
+  let lastMessageSent = $('.messages').children().last();
   lastMessageSent.find('.text').html(text);
   lastMessageSent.find('.typing_indicator').hide();
 };
@@ -164,8 +167,8 @@ const addTextToChatHistory = (text , replacesLastTextVal) => {
   let messageObj = new Message(text, message_side);
   console.log(messageObj);
   messageObj.draw();
-  return msg_list.animate({
-      scrollTop: msg_list.prop('scrollHeight')
+  return $('.messages').animate({
+      scrollTop: $('.messages').prop('scrollHeight')
   }, 300);
 };
 
@@ -206,11 +209,11 @@ const uuidv4 = _ => {
 function launchWelcomeIntent(){
   // JSON Format for events via POST :
   // 'event':{ 'name': 'custom_event', 'data': {'name': 'Sam'}}
-
-
-  // Instantiate sessionId for converstation
-  // TODO: Ask for user's name/info + save sessionId to firebase
   currentSession = uuidv4();
+  // TODO: firebase database interactions
+
+
+  
   $.ajax({
     type: "POST",
     url: baseUrl + "query?v=20150910",
