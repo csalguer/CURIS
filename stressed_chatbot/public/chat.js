@@ -2,7 +2,9 @@ var accessToken = "b55278df9fd8448aa8be3d804d80209d";
 var baseUrl = "https://api.api.ai/v1/";
 // var Database = firebase.database();
 var message_side = 'right';
-var currentSession;
+
+var max_num_sessions = 3;
+var curr_session;
 
 class Message {
     constructor(text, message_side){
@@ -87,23 +89,30 @@ const signInHandler = () => {
   if(last_name < 1){ alert('Last name must be longer than 1 character'); return;}
   let email = $('#user_email').val();
   let pass = last_name.toLowerCase() + first_name.toLowerCase() + email.split('@')[0];
-  let user = {
+  let userObj = {
     name: first_name,
     surname: last_name,
     email: email
   };
-  console.log(user);
+  console.log(userObj);
   firebase.auth().signInWithEmailAndPassword(email, pass)
   .then(function(user){
-    console.log('User successfully created');
-    switchToChatUI();
+    console.log('User successfully signed in');
+    console.log('Checking if n # of sessions already complete...')
+    if(completedMoreThanNSessions(user)){
+      // DISPLAY DIFFERENT ERROR FORM IN HTML
+      return switchToLockoutScreen();
+    }
+    curr_session = uuidv4();
+    addNewSession(user.uid, curr_session);
+    switchToChatUI(false, userObj);
   }).catch(function(error) {
     var errorCode = error.code;
     var errorMessage = error.message;
     if (errorCode === 'auth/wrong-password') {
       alert('Wrong password.');
     } else if (errorCode === 'auth/user-not-found') {
-      createUserHandler(user, pass); //Might have to rework code-example since promise based
+      createUserHandler(userObj, pass); //Might have to rework code-example since promise based
       return;
     } else {
       alert(errorMessage);
@@ -116,7 +125,10 @@ const signInHandler = () => {
 const createUserHandler = (userObj, pass) => {
   firebase.auth().createUserWithEmailAndPassword(userObj.email, pass)
   .then(function(user){
-    switchToChatUI();
+    console.log('User successfully created');
+    curr_session = uuidv4();
+    addToStudyParticipantsList(user.uid, userObj, curr_session);
+    switchToChatUI(true, userObj);
   }).catch(function(error) {
     var errorCode = error.code;
     var errorMessage = error.message;
@@ -130,10 +142,50 @@ const createUserHandler = (userObj, pass) => {
 };
 
 
-const switchToChatUI = () => {
+const completedMoreThanMaxNumSessions = user_id => {
+  const usersRef = firebase.database().ref().child('users');
+  usersRef.child(user_id)
+    .once('value')
+    .then( snap => {
+      if(snap.exists()){
+        let data = snap.val();
+        console.log(data.chat_sessions);
+        let convo_sessions = Object.keys(data.chat_sessions)
+        return convo_sessions.length >= max_num_sessions ? true : false;
+      }
+    }).catch( error => {
+      console.log(error);
+    });
+};
+
+
+const addToStudyParticipantsList = (user_id, userObj, first_session) => {
+  const usersRef = firebase.database().ref().child('users');
+  usersRef.child(user_id)
+    .set({
+      chat_sessions : {
+        first_session : false
+      }
+    });
+};
+
+const addNewSession = (user_id, new_session) => {
+  const updateRefPath = 'users/'+ user_id + '/chat_sessions';
+  const usersRef = firebase.database().ref().child(updateRefPath);
+  let data = { new_session : false };
+  usersRef.update(data);
+};
+
+const switchToChatUI = (isNewUser, userObj) => {
   $('.login_window').hide();
   $('.chat_window').show();
-  launchWelcomeIntent();
+  launchWelcomeIntent(isNewUser, userObj);
+};
+
+const switchToLockoutScreen(){
+  //STUB TO DO 
+  $('.login_window').hide();
+  $('#study_complete').show();
 };
 
 const initClientApp = () => {
@@ -148,6 +200,45 @@ const getUserInput = () => {
 const setUserInput = text => {
     $('.message_input').val(text);
 };
+
+
+function launchWelcomeIntent(isNewUser, userObj){
+  // JSON Format for events via POST :
+  // 'event':{ 'name': 'custom_event', 'data': {'name': 'Sam'}}
+  console.log("Initiating session $" + curr_session);
+  // TODO: firebase database interactions
+  let eventObj;
+  if(isNewUser){
+    eventObj = {event: { name: 'WELCOME', data : { username : userObj.name }}, lang: "en", sessionId: curr_session}
+  } else {
+    eventObj = {event: { name: 'WELCOME'}, lang: "en", sessionId: curr_session};
+  }
+  $.ajax({
+    type: "POST",
+    url: baseUrl + "query?v=20150910",
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    headers: {
+        "Authorization": "Bearer " + accessToken
+    },
+    data: JSON.stringify(eventObj),
+    beforeSend: function() {
+      addTextToChatHistory(null, false);
+    },
+    success: function(data) {
+        //Add incoming text result to messages list
+        var chatbot_response = data.result.fulfillment.speech;
+        console.log("Agent Responded: " + chatbot_response);
+        // Log response to firebase here -> SMALL TALK FEATURE HAS NOO WEBHOOK POSSIBILITY
+        addTextToChatHistory(chatbot_response, true);
+    },
+    error: function() {
+        //Add appropriate error message if failed
+        addTextToChatHistory("Internal Server Error", true);
+    }
+  });
+}
+
 
 const toggleIndicatorAndDisplayIncoming = text => {
   let lastMessageSent = $('.messages').children().last();
@@ -182,7 +273,7 @@ function sendAndUpdateChat(text) {
         headers: {
             "Authorization": "Bearer " + accessToken
         },
-        data: JSON.stringify({ query: text, lang: "en", sessionId: "somerandomthing" }),
+        data: JSON.stringify({ query: text, lang: "en", sessionId: curr_session }),
         beforeSend: function() {
           addTextToChatHistory(null, false);
         },
@@ -206,35 +297,3 @@ const uuidv4 = _ => {
   )
 }
 
-function launchWelcomeIntent(){
-  // JSON Format for events via POST :
-  // 'event':{ 'name': 'custom_event', 'data': {'name': 'Sam'}}
-  currentSession = uuidv4();
-  // TODO: firebase database interactions
-
-
-  
-  $.ajax({
-    type: "POST",
-    url: baseUrl + "query?v=20150910",
-    contentType: "application/json; charset=utf-8",
-    dataType: "json",
-    headers: {
-        "Authorization": "Bearer " + accessToken
-    },
-    data: JSON.stringify({event: { name: 'WELCOME'}, lang: "en", sessionId: "somerandomthing"}),
-    beforeSend: function() {
-      addTextToChatHistory(null, false);
-    },
-    success: function(data) {
-        //Add incoming text result to messages list
-        var chatbot_response = data.result.fulfillment.speech;
-        console.log("Agent Responded: " + chatbot_response);
-        addTextToChatHistory(chatbot_response, true);
-    },
-    error: function() {
-        //Add appropriate error message if failed
-        addTextToChatHistory("Internal Server Error", true);
-    }
-  });
-}

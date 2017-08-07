@@ -2,7 +2,7 @@
   box-sizing: border-box;
 }
 body {
-  background-image: url(img/bg-typefaces.png);
+  background-image: url(img/bg-typefaces-teal.png);
   background-color: #edeff2;
   font-family: 'Open Sans', "Roboto", sans-serif;
 }
@@ -41,7 +41,7 @@ body {
   margin-right: 10px;
   position: relative;
 }
-.top_menu .buttons .button.close {
+.top_menu .buttons .button.closer {
   background-color: #f5886e;
 }
 .top_menu .buttons .button.minimize {
@@ -301,7 +301,6 @@ body {
   margin: 0;
   height: 500px;
   width: 65%;
-  overflow: scroll;
 }
 
 #logo {

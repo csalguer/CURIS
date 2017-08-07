@@ -121,18 +121,20 @@ const timestamp = _ => {
 
 
 const logUserResponse = app => {
+  var sessionId = app.getSessionId();
   var date = timestamp();
   var input = app.getRawInput();
   var log = date + "|user_input|" + input;
   var intent = app.getIntent();
-  console.log(intent + "|" + log);
+  console.log(sessionId + "|" + intent + "|" + log);
 };
 
 const logAgentResponse = (app, message) => {
+  var sessionId = app.getSessionId();
   var date = timestamp();
   var log = date + "|agent_input|" + message;
   var intent = app.getIntent();
-  console.log(intent + "|" + log);
+  console.log(sessionId + "|" + intent + "|" + log);
 };
 
 const getRandomValue = responses => {
@@ -328,6 +330,7 @@ class App extends ApiAiApp {
     super(options);
     this.followupEvent_ = null;
     this.actionIncomplete_ = null;
+    this.session_id = this.body_.sessionId
   }
 
 
@@ -413,6 +416,10 @@ class App extends ApiAiApp {
     }
   }
 
+
+  getSessionId(){
+    return this.session_id;
+  }
 // DEPRECATED for OBJ manipulation
   // getContextArgumentsObj_(context_name){
   //   if(!context_name){

@@ -4,7 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
     <title>API.AI FrontEnd Example</title>
-    <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-orange.png">
     <!-- Latest Libraries -->
     <link href="https://fonts.googleapis.com/css?family=Nunito|Open+Sans" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -43,13 +43,13 @@
     <div class="login_window" style="display: block;">
       <div class="top_menu">
         <div class="buttons">
-          <div class="button close"></div>
+          <div class="button closer"></div>
           <div class="button minimize"></div>
           <div class="button maximize"></div>
         </div>
         <div class="title">Chat</div>
       </div>
-      <img src="img/chatbot-logo-teal.png" id="logo">
+      <img src="img/chatbot-logo-orange.png" id="logo">
       <div class="login_wrapper">
         <h1>Login to the study with your name and email</h1>
         <br>
@@ -65,6 +65,10 @@
             <div class="text">CHECK IN</div>
           </div>
         </form>
+      </div>
+
+      <div class="login_wrapper" id="study_complete" style="display:none;">
+        <h1 class="locked_message">It seems like you've already completed the study...</h1>
       </div>
       <h6>NOTE: We only use your information to track your participation in the study across multiple sessions.</h6>
     </div>
