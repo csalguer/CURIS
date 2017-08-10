@@ -1,16 +1,16 @@
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
-    <title>API.AI FrontEnd Example</title>
+    <title>StudentBot Study</title>
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-orange.png">
     <!-- Latest Libraries -->
     <link href="https://fonts.googleapis.com/css?family=Nunito|Open+Sans" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="chat.css">
     <!-- For Hosting on Firebase -->
-   <!--  <script src="/__/firebase/4.2.0/firebase-app.js"></script>
+    <!--  <script src="/__/firebase/4.2.0/firebase-app.js"></script>
     <script src="/__/firebase/4.2.0/firebase-auth.js"></script>
     <script src="/__/firebase/4.2.0/firebase-database.js"></script>
     <script src="/__/firebase/init.js"></script> -->
@@ -18,94 +18,99 @@
     <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase-database.js"></script>
     <script>
-      // Initialize Firebase
-      var config = {
+    // Initialize Firebase
+    var config = {
         apiKey: "AIzaSyC3oRlTdABh5jhom8ATX80inDK00FrpHp0",
         authDomain: "localhost",
-        // databaseURL: "https://stressed-chatbot.firebaseio.com",
+        databaseURL: "https://stressed-chatbot.firebaseio.com",
         projectId: "stressed-chatbot",
         storageBucket: "stressed-chatbot.appspot.com",
         messagingSenderId: "200930512094"
-      };
-      firebase.initializeApp(config);
+    };
+    firebase.initializeApp(config);
     </script>
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="chat.js"></script>
-
-    
 </head>
+
 <body>
-    <!-- <div>
-        <input id="input" type="text"> <button id="rec">Speak</button>
-        <br>Response<br> <textarea id="response" cols="40" rows="20"></textarea>
-    </div> -->
     <div class="login_window" style="display: block;">
-      <div class="top_menu">
-        <div class="buttons">
-          <div class="button closer"></div>
-          <div class="button minimize"></div>
-          <div class="button maximize"></div>
+        <div class="top_menu">
+            <div class="buttons">
+                <div class="button closer"></div>
+                <div class="button minimize"></div>
+                <div class="button maximize"></div>
+            </div>
+            <div class="title">Chat</div>
         </div>
-        <div class="title">Chat</div>
-      </div>
-      <img src="img/chatbot-logo-orange.png" id="logo">
-      <div class="login_wrapper">
-        <h1>Login to the study with your name and email</h1>
-        <br>
-        <form id="login_form">
-          <input type="text" id="user_fname" placeholder="First Name">
-          <br>
-          <input type="text" id="user_lname" placeholder="Last Name">
-          <br>
-          <input type="text" id="user_email" placeholder="Email Address">
-          <br>
-          <div id="signin">
-            <div class="icon"></div>
-            <div class="text">CHECK IN</div>
-          </div>
-        </form>
-      </div>
-
-      <div class="login_wrapper" id="study_complete" style="display:none;">
-        <h1 class="locked_message">It seems like you've already completed the study...</h1>
-      </div>
-      <h6>NOTE: We only use your information to track your participation in the study across multiple sessions.</h6>
+        <img src="img/chatbot-logo-orange.png" id="logo">
+        <div class="login_wrapper">
+            <h1>Login to the study with your name and email</h1>
+            <br>
+            <form id="login_form">
+                <input type="text" id="user_fname" placeholder="First Name">
+                <br>
+                <input type="text" id="user_lname" placeholder="Last Name">
+                <br>
+                <input type="text" id="user_email" placeholder="Email Address">
+                <br>
+                <div id="signin">
+                    <div class="icon"></div>
+                    <div class="text">CHECK IN</div>
+                </div>
+            </form>
+        </div>
+        <h6>NOTE: We only use your information to track your participation in the study across multiple sessions.</h6>
     </div>
-
+    <div class="completed_wrapper" style="display: none;">
+        <h1 class="study_complete">It seems like you've already completed the study...</h1>
+    </div>
+    <div class="error_wrapper" style="display: none;">
+        <h1 class="error_message">It seems like something went wrong ... please refresh.</h1>
+    </div>
+    <div class="loading_wrapper" style="display: none;">
+        <div class="loading_logo hvr-hang">
+            <div class="left_eye eye"></div>
+            <div class="right_eye eye"></div>
+            <div class="bubble bubble-hang"></div>
+        </div>
+        <h1 class="loading_message">Checking you in...</h1>
+    </div>
     <div class="chat_window" style="display: none;">
-      <div class="top_menu">
-        <div class="buttons">
-          <div class="button close"></div>
-          <div class="button minimize"></div>
-          <div class="button maximize"></div>
+        <div class="top_menu">
+            <div class="buttons">
+                <div class="button close"></div>
+                <div class="button minimize"></div>
+                <div class="button maximize"></div>
+            </div>
+            <div class="title">Chat</div>
         </div>
-        <div class="title">Chat</div>
-      </div>
-      <ul class="messages">
-      </ul>
-      <div class="bottom_wrapper clearfix">
-        <div class="message_input_wrapper">
-          <input class="message_input" placeholder="Type your message here...">
+        <ul class="messages">
+        </ul>
+        <div class="bottom_wrapper clearfix">
+            <div class="message_input_wrapper">
+                <input class="message_input" placeholder="Type your message here...">
+            </div>
+            <div class="send_message">
+                <div class="icon"></div>
+                <div class="text">Send</div>
+            </div>
         </div>
-        <div class="send_message">
-          <div class="icon"></div>
-          <div class="text">Send</div>
-        </div>
-      </div>
     </div>
     <div class="message_template">
-      <li class="message">
-        <div class="avatar"></div>
-        <div class="text_wrapper">
-          <div class="text"></div>
-          <div class="typing_indicator">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      </li>
+        <li class="message">
+            <div class="avatar"></div>
+            <div class="text_wrapper">
+                <div class="text"></div>
+                <div class="typing_indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </li>
     </div>
 </body>
+
 </html>
