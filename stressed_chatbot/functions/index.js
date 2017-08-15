@@ -458,33 +458,78 @@ class App extends ApiAiApp {
         return emptySlots;
     }
 
+// DEPRECATED For preference of a sorted array solution ensuring only the most long
+// lived array's data get's coalesced -> might have to lower most from 5 to 3 lifespans
+    // coalesceContexts() {
+    //     let running_context = {
+    //         name: 'running_context',
+    //         lifespan: Lifespans.RUNNING
+    //     };
+    //     let prev_lifespan_processed;
+    //     let running_context_params = {};
+    //     const contextList = this.getContexts();
+    //     for (let context of contextList) {
+    //         let paramTemp = context.parameters;
+    //         if (paramTemp !== null && typeof paramTemp !== 'undefined') {
+    //             for (var [key, value] of Object.entries(paramTemp)) {
+    //                 if (!running_context_params.hasOwnProperty(key)) {
+    //                     running_context_params[key] = value;
+    //                 } else {
+    //                     //Checks to see if longer living than previous encountered
+    //                     if (context.lifespan > prev_lifespan_processed) {
+    //                         running_context_params[key] = value;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         prev_lifespan_processed = context.lifespan;
+    //     }
+    //     running_context['parameters'] = running_context_params;
+    // }
+
+
 
     coalesceContexts() {
+
+        function compareByLifespan(a, b) {
+            return a.lifespan - b.lifespan;
+        }
+
+
+
         let running_context = {
             name: 'running_context',
-            lifespan: Lifespans.RUNNING
+            lifespan: 100
         };
-        let prev_lifespan_processed;
         let running_context_params = {};
-        const contextList = this.getContexts();
+        //   const contextList = this.getContexts();
+        var contextList = raw_response.sort(compareByLifespan);
+        console.log('Sorted array by lifespans');
         for (let context of contextList) {
             let paramTemp = context.parameters;
             if (paramTemp !== null && typeof paramTemp !== 'undefined') {
+                console.log(`Parameter list for ${context.name} was not null.`);
                 for (var [key, value] of Object.entries(paramTemp)) {
                     if (!running_context_params.hasOwnProperty(key)) {
+                        console.log(`NO entry with (k:${key}, v:${value}) found in running context.`);
                         running_context_params[key] = value;
                     } else {
                         //Checks to see if longer living than previous encountered
-                        if (context.lifespan > prev_lifespan_processed) {
-                            running_context_params[key] = value;
-                        }
+                        console.log(`PREV entry with k:${key} found in running context, won't add...`);
+                        /*if (context.lifespan > prev_lifespan_processed) {
+                          
+                          running_context_params[key] = value;
+                        }*/
                     }
                 }
             }
-            prev_lifespan_processed = context.lifespan;
         }
         running_context['parameters'] = running_context_params;
+        return running_context;
     }
+
+
+
 
     persistAllIncomingContexts() {
         const contextList = this.getContexts();
@@ -592,7 +637,8 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             // };
             // app.setFollowupEvent('specify-course-event', params);
             const emptySlots = app.getSlotsNeedingFill();
-            assert(emptySlots[0] === 'course', 'Malformed context bound for detailed intent');
+            //assert(emptySlots[0] === 'course', 'Malformed context bound for detailed intent'); 
+            // Check for failure insert at
             var retMessage = getRandomValue(ACADEMICS_SLOTFILL);
             app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
             app.persistTempContextForSlotFilling();
