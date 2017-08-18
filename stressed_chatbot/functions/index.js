@@ -34,6 +34,7 @@ const Actions = {
     EXP_ACADEMICS_GOALS: 'explain.academics.goals',
     EXP_ACADEMICS_FUTURE: 'explain.academics.future',
     EXP_ACADEMICS_DETAILED: 'explain.academics.detailed',
+    EXP_ACADEMICS_SENTIMENT: 'explain.academics.sentiment',
 
 
     //ASSIGNMENTS
@@ -48,35 +49,36 @@ const Actions = {
     GET_HOBBIES: 'get.hobbies',
     GET_HOBBIES_DETAILED: 'get.hobbies.detailed',
     EXP_HOBBIES: 'explain.hobbies',
-    EXP_HOBBIES_DETAILED: 'explain.hobbies.detailed',
-    EXP_HOBBIES_BENEFIT: 'explain.hobbies.benefit'
+    // EXP_HOBBIES_DETAILED: 'explain.hobbies.detailed',
+    EXP_HOBBIES_BENEFIT: 'explain.hobbies.benefit',
 
     //RELAX_METHODS
     GET_RELAX: 'get.relax_methods',
-    GET_RELAX_DETAILED: 'get.relax_methods.detailed',
+    // GET_RELAX_DETAILED: 'get.relax_methods.detailed',
     EXP_RELAX: 'explain.relax_methods',
-    EXP_RELAX_DETAILED: 'explain.relax_methods.detailed',
+    // EXP_RELAX_DETAILED: 'explain.relax_methods.detailed',
     EXP_RELAX_BENEFIT: 'explain.relax_methods.benefit',
 
     //FINALS
     GET_FINALS: 'get.finals',
-    GET_FINALSPECS: 'get.finals_specs'
+    GET_FINAL_DETSPECS: 'get.finals.detailed_specs',
     GET_FINALS_DETAILED: 'get.finals.detailed',
     GET_FINALS_DETPROGRESS: 'get.finals.detailed_progress',
-    GET_FINALS_DETSENTIMENT: 'get.finals.detailed_sentiment',
+    // GET_FINALS_DETSENTIMENT: 'get.finals.detailed_sentiment',
     EXP_FINALS: 'explain.finals',
     EXP_FINALS_DETAILED: 'explain.finals.detailed',
-    EXP_FINALS_DETPROGRESS: 'explain.finals.detailed_progress',
-    EXP_FINALS_WEIGHTED: 'explain.finals_spec.weight',
-    EXP_FINALS_DETSENTIMENT: 'explain.finals.detailed_sentiment',
-    EXP_FINALS_STUDYPLAN: 'explain.finals.study_habit',
+    EXP_FINALS_PROGRESS: 'explain.finals.progress',
+    // EXP_FINALS_WEIGHTED: 'explain.finals_spec.weight',
+    EXP_FINALS_SENTIMENT: 'explain.finals.sentiment',
+    EXP_FINALS_PLAN: 'explain.finals.plan',
+    EXP_FINALS_STUDYHABIT: 'explain.finals.study_habit',
 
-
+    //DEPRECATED DUE TO RUNNING_CONTEXT
     // MINDSTATE : testing for vagueness matching 
-    GET_MINDSTATE: 'get.mindstate',
-    GET_MINDSTATE_DETAILED: 'get.mindstate.detailed',
-    EXP_MINDSTATE: 'explain.mindstate',
-    EXP_MINDSTATE_DETAILED: 'explain.mindstate.detailed',
+    // GET_MINDSTATE: 'get.mindstate',
+    // GET_MINDSTATE_DETAILED: 'get.mindstate.detailed',
+    // EXP_MINDSTATE: 'explain.mindstate',
+    // EXP_MINDSTATE_DETAILED: 'explain.mindstate.detailed',
     //APP INTERNAL STATE
     WELCOME: 'launch.welcome'
 };
@@ -93,7 +95,8 @@ const COURSE_ARG = 'course';
 const HOBBY_ARG = 'hobbies_self';
 const Parameters = {
     COURSE_ARG: 'course',
-    HOBBY_ARG: 'hobby'
+    HOBBY_ARG: 'hobby',
+    RELAX_ARG: 'relax_method'
 };
 
 // API.AI Contexts
@@ -215,6 +218,13 @@ const FINALS_TYPE = {
     PAPER: 'paper'
 };
 
+
+const FINALS_EXPLANATION = [
+    `Well I could've had  a bit of a different schedule lined up if I had asked my professors to allow me to merge my projects, but I'm a bit stuck with the crazy load at this point.`,
+    `I'm not happy about my schedule, since I could've had my projects merged so I had one less final to deal with but I didn't have time to ask the professors involved.`,
+    `I'm just disappointed I didn't petition my professors to merge my two projects, so I'm left with one extra final's worth of work to do unfortunately enough.`
+];
+
 function Final(course, type, due_date, unit_workload, letter_grade, progress, harbored_sentiment, procrast_lvl) {
     this.course = course;
     this.type = type;
@@ -262,8 +272,11 @@ Final.prototype.getSentiment = () => {
     return ret;
 }
 
+const LETTER_GRADES = ['F', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A'];
+
 Final.prototype.explainDetailed = () => {
-    var ret = `Considering I currently have a ${this.letter_grade}`;
+    // let grade_str = LETTER_GRADES[this.letter_grade];
+    var ret = `Considering I currently have a ${LETTER_GRADES[this.letter_grade]}`;
     if(this.letter_grade < 5){
         ret += `, I really can't afford to mess up this ${this.type}.`;
     } if (this.letter_grade == 5){
@@ -284,14 +297,12 @@ Final.prototype.explainDetailed = () => {
     return ret;
 }
 
-const FINALS_TYPE_ACTION_REQ = {
-    FINALS_TYPE.EXAM : 'studying for',
-    FINALS_TYPE.PAPER : 'writing',
-    FINALS_TYPE.PROJECT : 'completing'
-};
+const FINALS_TYPE_ACTION_REQ = {};
+FINALS_TYPE_ACTION_REQ[FINALS_TYPE.EXAM] = 'studying for';
+FINALS_TYPE_ACTION_REQ[FINALS_TYPE.PAPER] = 'writing';
+FINALS_TYPE_ACTION_REQ[FINALS_TYPE.PROJECT] = 'completing';
 
-
-Final.Prototype.explainProgress = () => {
+Final.prototype.explainProgress = () => {
     var quantifier;
     var extra_aside;
     if (this.progress <= .25) {
@@ -312,7 +323,7 @@ Final.Prototype.explainProgress = () => {
 }
 
 
-Final.Prototype.explainPlan = () => {
+Final.prototype.explainPlan = () => {
     var ret;
     var extra_aside;
     if(this.letter_grade < 5){
@@ -341,7 +352,7 @@ Final.Prototype.explainPlan = () => {
 }
 
 
-Final.Prototype.explainStudyHabit = () => {
+Final.prototype.explainStudyHabit = () => {
     var quantifier;
     var extra_aside;
     if (this.procrast_lvl <= 3) {
@@ -359,7 +370,7 @@ Final.Prototype.explainStudyHabit = () => {
     return ret;
 };
 
-Final.Prototype.getSpecs = () => {
+Final.prototype.getSpecs = () => {
     var ret;
     if(this.type == FINALS_TYPE.EXAM){
         ret = `Well, most all final exams tend to follow the same format. Get through the N number of questions before 3 hours are up... not much variety there.`;
@@ -434,6 +445,7 @@ const ACADEMICS_FUTURE_RESPONSES = [
     'Ideally I would continue an extra year into my Masters program but I may have to postpone any further degrees due to financial reasons. That, and the fact that my stress levels and workload are already too high.'
 ];
 
+
 const ACADEMICS_GOALS_RESPONSES = [
     'I guess that my ideal set of grades would be a mix of A\'s and B\'s. I\'d want them to better reflect the amount of time gone into work and studying I guess. Thankfully I\'m not terribly far from my ideal.',
     'I would love to receive above average grades for my courses. I put in a lot of work and time into my classes but that doesn\'t always translate to good grades unfortunately. I don\'t think I\'m terribly far from my dream set of grades thought thankfully enough.',
@@ -475,6 +487,7 @@ const ACADEMICS_EXPLANATION_SENT = [
     `I'm torn usually, I want to be the best and smartest but I'm too aware, aware of my shortcomings, aware of my failures, and it's too distracting sometimes. Of course I wish I could do better, but I'm too self-aware to think that I actually could...`
 ];
 
+
 const HOBBY_SLOTFILL = ['Which hobby were you asking about?', 'Which one of my hobbies were you asking about again?'];
 const HOBBIES = new Set([
     'yoga',
@@ -488,14 +501,14 @@ const HOBBIES = new Set([
 ]);
 
 const HOBBIES_DETAIL = {
-    'yoga': ''
-    'hiking':
-    'badminton':
-    'video gaming' :
-    'painting': 
-    'reading': 
-    'soccer': 
-    'cooking': 
+    'yoga': 'I do some form of sun salutation at least a few times a week and I also try to do some inverted positions. Right now I\'m a bit stuck on getting my Scorpion pose down. ',
+    'hiking': `I try to go on hikes when I have the time. Thankfully I live near a few national parks which have some nice wooded trails.`, 
+    'badminton': `Well I used to be on my univeristy's team, and finding a good partner and court can be tough but I still play from time to time.`,
+    'video gaming' : `I constantly game and try to advance whatever quest or battle for the game I have going on. It's a nice decent distraction I think.`,
+    'painting': `I paint when I have the time, mostly landscapes and a few impressionist style paintings but nothing too crazy or detailed, makes mistakes easier to deal with I guess.`,
+    'reading': `I've always read since I was little. Most of it is technical reading now for work or school but I enjoy a nice novel here and there.`,
+    'soccer': `I played soccer growing up so it's always brought nice memories. I need to find a good team of people to play though so it makes it a bit tough during a busy work season.`,
+    'cooking': `Well I cook everday and I like to make quite the variety of food. I just need a good craving and I'm set basically, just a bit tough to find a craving sometimes.`
 }
 
 const HOBIES_BENEFIT = {
@@ -510,11 +523,23 @@ const HOBIES_BENEFIT = {
 };
 
 
+const HOBBIES_EXPLANATION = [
+    `Well I guess most of my hobbies are more leisure activities, I just don't like anything too strenuous or taxing. If I want some active activity or exercise, I go do that, but not for funzies...`,
+    `Most of my hobbies are leisurely or just brainy. I just don't want to get tired when I want to do something for fun and interest.`,
+    `I don't have too many crazy hobbies, and most of them are just laid-back and leisurely. I don't like anyting too tiring, if I wanted to get tired I'd go to the gym...`
+];
+
 const RELAX_METHODS = [
     `I'm not too keen on dedicating the time for pure relaxtion, but I guess I do have some methods I use. When it comes to relaxing, I guess that I'm into mindfulness exercises, awareness and the like.`,
     `Taking a full hour to relax isn't something I do, but I have done a few things to help when I've needed it. I tend to lean more towards conciousness exercises like mindfulness meditations, breathing, etc.`,
-    `The activities that actually relax me are a bit closer to home... well the body that is. I really think that mindfulness and awareness exercises do the best to calm me down.`
+    `The activities that actually relax me are a bit closer to home... well about the mind that is. I really think that mindfulness and awareness exercises do the best to calm me down and help put things into perspective, which is the main thing I need.`
 ];
+
+const RELAX_BENEFITS = {
+    'meditation' : 'Well I guess the main thing I get from meditation is that it kinda calms me down and stops me from thinking too much, which tends to be my main flaw.',
+    'deep breathing' : 'I just seem to need a way to make myself stop any crazy thought spirals or breakdowns and focusing on just my breath definitely puts a damper in much of my "crazy".',
+    'mindfulness' : `Well I guess it's a bit of a vague excercise but just being aware of everything can put things in perspective. I have a problem of being too aware of other sometimes, but reminding myself that they also have problems too, being mindful of that, does shift my thinking a bit and helps with empathy.`
+};
 
 
 const selectReasonForHobby = (given_hobby, data) => {
@@ -665,7 +690,7 @@ class App extends ApiAiApp {
         };
         let running_context_params = {};
         //   const contextList = this.getContexts();
-        var contextList = raw_response.sort(compareByLifespan);
+        var contextList = getContexts().sort(compareByLifespan);
         console.log('Sorted array by lifespans');
         for (let context of contextList) {
             let paramTemp = context.parameters;
@@ -798,7 +823,6 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
         var retMessage = getRandomValue(AcademicsGoalsExp);
         logAgentResponse(app, retMessage);
         return app.tell(retMessage);
-
     }
 
     function expAcademicsFuture(app){
@@ -818,6 +842,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             app.data.AcademicsGoalsResp : ACADEMICS_EXPLANATIONS_DET;
         var retMessage = getRandomValue(AcademicsDetExp);
         logAgentResponse(app, retMessage);
+        app.setContext(running_context); //USED FOR TESTING CHECK COALESCE
         return app.tell(retMessage);
     }
 
@@ -830,6 +855,11 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
         logAgentResponse(app, retMessage);
         return app.tell(retMessage);
     }
+
+
+
+
+
 
     function getFinalsDetail(app) {
         console.log('getFinalsDetail');
@@ -932,8 +962,253 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
         return;
     }
 
-    function getRelaxMethods(app) {
+
+    function getFinalsDetSpecs(app){
+        console.log('getFinalsDetSpecs');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            var retMessage = getRandomValue(ACADEMICS_SLOTFILL); //CHANGE TO FINALS SLOT FILL
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var courseName = app.getArgument(COURSE_ARG);
+        assert(courseName != '', "Empty string found for course_name");
+        let finalsData = app.data.finalsData ?
+            app.data.finalsData : FINALS_DATA;
+        var finalsList = getFinalsData(courseName, finalsData);
+        var ret;
+        let finalsPrefix = `Well, I can mention a bit about the progress of my final for ${courseName}.\n`;
+        if (finalsList.length > 1) {
+            finalsPrefix = finalsPrefix.replace("final", "finals");
+            ret = finalsPrefix;
+            for(let finalObj of finalsList){
+                ret += finalObj.getSpecs();
+            }
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        } else if (finalsList.length == 1) {
+            let finalObj = finalsList[0];
+            ret = finalsPrefix + finalObj.getSpecs();
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        }
+        return;
+    }
+
+    function expFinals(app){
+        logUserResponse(app);
+        let finalsExp = app.data.finalsExp ?
+            app.data.finalsExp : FINALS_EXPLANATION;
+        var retMessage = getRandomValue(finalsExp);
+        logAgentResponse(app, retMessage);
+        return app.tell(retMessage);
+    }
+
+    function expFinalsDetailed(app){
+        console.log('expFinalsDetailed');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            var retMessage = getRandomValue(ACADEMICS_SLOTFILL); //CHANGE TO FINALS SLOT FILL
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var courseName = app.getArgument(COURSE_ARG);
+        assert(courseName != '', "Empty string found for course_name");
+        let finalsData = app.data.finalsData ?
+            app.data.finalsData : FINALS_DATA;
+        var finalsList = getFinalsData(courseName, finalsData);
+        var ret;
+        let finalsPrefix = `I could go on and on about my final for ${courseName}.\n`;
+        if (finalsList.length > 1) {
+            finalsPrefix = finalsPrefix.replace("final", "finals");
+            ret = finalsPrefix;
+            for(let finalObj of finalsList){
+                ret += finalObj.explainDetailed();
+            }
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        } else if (finalsList.length == 1) {
+            let finalObj = finalsList[0];
+            ret = finalsPrefix + finalObj.explainDetailed();
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        }
+        return;
+    }
+
+    function expFinalsSentiment(app){
+        console.log('expFinalsSentiment');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            var retMessage = getRandomValue(ACADEMICS_SLOTFILL); //CHANGE TO FINALS SLOT FILL
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var courseName = app.getArgument(COURSE_ARG);
+        assert(courseName != '', "Empty string found for course_name");
+        let finalsData = app.data.finalsData ?
+            app.data.finalsData : FINALS_DATA;
+        var finalsList = getFinalsData(courseName, finalsData);
+        var ret;
+        let finalsPrefix = `Well, I can mention a bit about the progress of my final for ${courseName}.\n`;
+        if (finalsList.length > 1) {
+            finalsPrefix = finalsPrefix.replace("final", "finals");
+            ret = finalsPrefix;
+            for(let finalObj of finalsList){
+                ret += finalObj.getSentiment();
+            }
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        } else if (finalsList.length == 1) {
+            let finalObj = finalsList[0];
+            ret = finalsPrefix + finalObj.getSentiment();
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        }
+        return;
+    }
+
+    function expFinalsProgress(app){
+        console.log('expFinalsProgress');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            var retMessage = getRandomValue(ACADEMICS_SLOTFILL); //CHANGE TO FINALS SLOT FILL
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var courseName = app.getArgument(COURSE_ARG);
+        assert(courseName != '', "Empty string found for course_name");
+        let finalsData = app.data.finalsData ?
+            app.data.finalsData : FINALS_DATA;
+        var finalsList = getFinalsData(courseName, finalsData);
+        var ret;
+        let finalsPrefix = `Well, I can mention a bit about the progress of my final for ${courseName}.\n`;
+        if (finalsList.length > 1) {
+            finalsPrefix = finalsPrefix.replace("final", "finals");
+            ret = finalsPrefix;
+            for(let finalObj of finalsList){
+                ret += finalObj.explainProgress();
+            }
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        } else if (finalsList.length == 1) {
+            let finalObj = finalsList[0];
+            ret = finalsPrefix + finalObj.explainProgress();
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        }
+        return;
+    }
+
+    function expFinalsPlan(app){
+        console.log('expFinalsPlan');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            var retMessage = getRandomValue(ACADEMICS_SLOTFILL); //CHANGE TO FINALS SLOT FILL
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var courseName = app.getArgument(COURSE_ARG);
+        assert(courseName != '', "Empty string found for course_name");
+        let finalsData = app.data.finalsData ?
+            app.data.finalsData : FINALS_DATA;
+        var finalsList = getFinalsData(courseName, finalsData);
+        var ret;
+        let finalsPrefix = `I do have a plan for my final for ${courseName}.\n`;
+        if (finalsList.length > 1) {
+            finalsPrefix = finalsPrefix.replace("final", "finals");
+            ret = finalsPrefix;
+            for(let finalObj of finalsList){
+                ret += finalObj.explainPlan();
+            }
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        } else if (finalsList.length == 1) {
+            let finalObj = finalsList[0];
+            ret = finalsPrefix + finalObj.explainPlan();
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        }
+        return;
+    }
+
+
+    function expFinalsStudyHabit(app){
+        console.log('expFinalsStudyHabit');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            var retMessage = getRandomValue(ACADEMICS_SLOTFILL); //CHANGE TO FINALS SLOT FILL
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var courseName = app.getArgument(COURSE_ARG);
+        assert(courseName != '', "Empty string found for course_name");
+        let finalsData = app.data.finalsData ?
+            app.data.finalsData : FINALS_DATA;
+        var finalsList = getFinalsData(courseName, finalsData);
+        var ret;
+        let finalsPrefix = `I do have a plan for my final for ${courseName}.\n`;
+        if (finalsList.length > 1) {
+            finalsPrefix = finalsPrefix.replace("final", "finals");
+            ret = finalsPrefix;
+            for(let finalObj of finalsList){
+                ret += finalObj.explainStudyHabit();
+            }
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        } else if (finalsList.length == 1) {
+            let finalObj = finalsList[0];
+            ret = finalsPrefix + finalObj.explainStudyHabit();
+            logAgentResponse(app, ret);
+            return app.tell(ret);
+        }
+        return;
+    }
+
+
+
+
+
+
+
+    function getRelaxMethods(app){
         console.log('getRelaxMethods');
+        logUserResponse(app);
+        let relaxMethods = app.data.relaxMethods ?
+            app.data.relaxMethods : RELAX_BENEFITS;
+        let methods = Object.keys(relaxMethods);
+        let methodStr = methods.join(', ');
+        let ret = `In terms of relaxation, I tend to do some ${methodStr}`;
+        logAgentResponse(app, ret);
+        return app.tell(ret);
+    }
+
+    function expRelaxMethods(app) {
+        console.log('expRelaxMethods');
         logUserResponse(app);
         let relaxMethods = app.data.relaxMethods ?
             app.data.relaxMethods : RELAX_METHODS;
@@ -942,12 +1217,69 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
         return app.tell(retMessage);
     }
 
+    function expRelaxBenefits(app){
+        console.log('getRelaxDet');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            // assert(emptySlots[0] === 'hobby', 'Malformed context bound for detailed intent');
+            var retMessage = getRandomValue(RELAX_SLOTFILL);
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var relaxName = app.getArgument(Parameters.RELAX_ARG);
+        assert(relaxName != null, "Empty string found for relax_name");
+        let relaxData = app.data.relaxData ?
+            app.data.relaxData : RELAX_DATA;
+        var hobbiesBenefit = relaxData[relaxName];
+        let relaxPrefix = `I mean, I guess there are many benefits to ${relaxName}. `;
+        var retStr = relaxPrefix + hobbiesBenefit;
+        logAgentResponse(app, retStr);
+        return app.tell(retStr);
+    }
 
-    function getRelax
 
+
+
+    function expHobbies(app){
+        console.log('expHobbies');
+        logUserResponse(app);
+        let hobbiesExp = app.data.hobbiesExp ?
+            app.data.hobbiesExp : HOBBIES_EXPLANATION;
+        let ret = getRandomValue(hobbiesExp);
+        logAgentResponse(app, ret);
+        return app.tell(ret);
+    }
 
     function getHobbiesDetail(app) {
         console.log('getHobbiesDetail');
+        logUserResponse(app);
+        const requiresFilling = app.isSlotFillingRequest();
+        if (requiresFilling) {
+            const emptySlots = app.getSlotsNeedingFill();
+            assert(emptySlots[0] === 'hobby', 'Malformed context bound for detailed intent');
+            var retMessage = getRandomValue(HOBBY_SLOTFILL);
+            app.setFollowupEvent(Events.SLOT_FILL.replace('*', emptySlots[0]), app.data);
+            app.persistTempContextForSlotFilling();
+            logAgentResponse(app, retMessage);
+            return app.ask(retMessage); //VS ask?
+        }
+        var hobbyName = app.getArgument(Parameters.HOBBY_ARG);
+        assert(hobbyName != null, "Empty string found for hobby_name");
+        let hobbiesDetData = app.data.hobbiesDetData ?
+            app.data.hobbiesDetData : HOBBIES_DETAIL;
+        var hobbiesDetail = hobbiesDetData[hobbyName]
+        let hobbiesPrefix = `Well, there's a bit to me liking ${hobbyName}. `;
+        var retStr = hobbiesPrefix + hobbiesDetail;
+        logAgentResponse(app, retStr);
+        return app.tell(retStr);
+    }
+
+    function expHobbiesBenefit(app) {
+        console.log('expHobbiesBenefit');
         logUserResponse(app);
         const requiresFilling = app.isSlotFillingRequest();
         if (requiresFilling) {
@@ -970,7 +1302,6 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
         return app.tell(retStr);
     }
 
-
     function launchWelcome(app) {
         logUserResponse(app);
         let welcomeGreeting = app.data.welcomeGreeting ?
@@ -981,8 +1312,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     }
 
     let actionMap = new Map();
-    actionMap.set(Actions.GET_FINALS_DETAILED, getFinalsDetail);
-    actionMap.set(Actions.GET_HOBBIES_DETAILED, getHobbiesDetail);
+    //ACADEMICS MAPPED
     actionMap.set(Actions.GET_ACADEMICS, getAcademics);
     actionMap.set(Actions.GET_ACADEMICS_FUTURE, getAcademicsFuture);
     actionMap.set(Actions.GET_ACADEMICS_GOALS, getAcademicsGoals);
@@ -990,6 +1320,31 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     actionMap.set(Actions.EXP_ACADEMICS_DETAILED, expAcademicsDetailed);
     actionMap.set(Actions.EXP_ACADEMICS_GOALS, expAcademicsGoals);
     actionMap.set(Actions.EXP_ACADEMICS_FUTURE, expAcademicsFuture);
+
+
+    // HOBBIES MAPPED
+    actionMap.set(Actions.GET_HOBBIES_DETAILED, getHobbiesDetail);
+    actionMap.set(Actions.EXP_HOBBIES, expHobbies);
+    actionMap.set(Actions.EXP_HOBBIES_BENEFIT, expHobbiesBenefit);
+
+
+    //RELAX MAPPED
+    actionMap.set(Actions.GET_RELAX, getRelaxMethods);
+    actionMap.set(Actions.EXP_RELAX, expRelaxMethods);
+    actionMap.set(Actions.EXP_RELAX_BENEFIT, expRelaxBenefits);
+
+
+    //FINALS MAPPED
+    actionMap.set(Actions.GET_FINALS_DETAILED, getFinalsDetail);
+    actionMap.set(Actions.GET_FINALS_DETPROGRESS, getFinalsDetProgress);
+    actionMap.set(Actions.GET_FINALS_DETSPECS, getFinalsDetSpecs);
+    actionMap.set(Actions.EXP_FINALS, expFinals);
+    actionMap.set(Actions.EXP_FINALS_DETAILED, expFinalsDetailed);
+    actionMap.set(Actions.EXP_FINALS_SENTIMENT, expFinalsSentiment);
+    actionMap.set(Actions.EXP_FINALS_PROGRESS, expFinalsProgress);
+    actionMap.set(Actions.EXP_FINALS_PLAN, expFinalsPlan);
+    actionMap.set(Actions.EXP_FINALS_STUDYHABIT, expFinalsStudyHabit);
+
     actionMap.set(Actions.WELCOME, launchWelcome);
     app.handleRequest(actionMap);
 });
