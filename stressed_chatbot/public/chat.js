@@ -64,18 +64,15 @@ $(document).ready(function() {
     // Handle User Login for 3-Day studies
     $('#login_form').on('submit', function(event) {
         event.preventDefault();
-        switchToLoadingScreen();
         signInHandler();
     });
     $('#signin').click(function(event) {
         event.preventDefault();
-        switchToLoadingScreen();
         signInHandler();
     });
     $('#user_email').keyup(function(event) {
         if (event.which == 13) {
             event.preventDefault();
-            switchToLoadingScreen();
             signInHandler();
         }
     });
@@ -85,6 +82,7 @@ $(document).ready(function() {
         if (event.which == 13) {
             event.preventDefault();
             var user_input = getUserInput();
+            if(user_input.length === 0) {return;}
             setTimeout(addTextToChatHistory(user_input, false), 300);
             setUserInput('');
             sendAndUpdateChat(user_input);
@@ -92,6 +90,7 @@ $(document).ready(function() {
     });
     $('.send_message').click(function(event) {
         var user_input = getUserInput();
+        if(user_input.length === 0) {return;}
         setTimeout(addTextToChatHistory(user_input, false), 300);
         setUserInput('');
         sendAndUpdateChat(user_input);
@@ -103,8 +102,8 @@ const signInHandler = () => {
     console.log('signInHandler');
     let first_name = $('#user_fname').val();
     let last_name = $('#user_lname').val();
-    if (first_name < 1) { alert('First name must be longer than 1 character'); return; }
-    if (last_name < 1) { alert('Last name must be longer than 1 character'); return; }
+    if (first_name < 1) { alert('First name must be longer than 1 character'); return switchToLoginScreen(); }
+    if (last_name < 1) { alert('Last name must be longer than 1 character'); return switchToLoginScreen(); }
     let email = $('#user_email').val();
     let pass = last_name.toLowerCase() + first_name.toLowerCase() + email.split('@')[0];
     let userObj = {
@@ -122,16 +121,24 @@ const signInHandler = () => {
         }).catch(function(error) {
             var errorCode = error.code;
             var errorMessage = error.message;
+            console.log(errorMessage);
             if (errorCode === 'auth/wrong-password') {
-                alert('Wrong password.');
-                switchToLoginScreen();
+                swal({
+                    title: "Wrong Password",
+                    text: "Incorrect password was entered.",
+                    type: "error"
+                });
             } else if (errorCode === 'auth/user-not-found') {
+                switchToLoadingScreen();
                 createUserHandler(userObj, pass); //Might have to rework code-example since promise based
                 return;
             } else {
-                alert(errorMessage);
+                swal({
+                    title: "Error",
+                    text: errorMessage,
+                    type: "error"
+                });
             }
-            console.log(error);
         });
 };
 
@@ -145,9 +152,17 @@ const createUserHandler = (userObj, pass) => {
             var errorCode = error.code;
             var errorMessage = error.message;
             if (errorCode == 'auth/weak-password') {
-                alert('The password is too weak.');
+                swal({
+                    title: "Weak Password",
+                    text: errorMessage,
+                    type: "error"
+                });
             } else {
-                alert(errorMessage);
+                swal({
+                    title: "Error",
+                    text: errorMessage,
+                    type: "error"
+                });
             }
             console.log(error);
         });
@@ -164,7 +179,7 @@ const checkIfFinishedMoreThanMaxNumSessions = userObj => {
                 let data = snap.val();
                 console.log(data.chat_sessions);
                 let convo_sessions = Object.keys(data.chat_sessions)
-                if(convo_sessions.length >= max_num_sessions) {
+                if (convo_sessions.length >= max_num_sessions) {
                     return switchToLockoutScreen();
                 }
                 return setTimeout(switchToChatUI(false, userObj), 4500);
@@ -239,7 +254,7 @@ const addNewChatSessionToUser = (user_id, new_session) => {
 const switchToChatUI = (isNewUser, userObj) => {
     curr_session = uuidv4();
     console.log('Session Generated: $' + curr_session);
-    if(isNewUser){
+    if (isNewUser) {
         addToStudyParticipantsList(userObj, curr_session);
     }
     addNewChatSessionToUser(userObj.uid, curr_session);

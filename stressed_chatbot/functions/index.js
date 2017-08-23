@@ -80,7 +80,8 @@ const Actions = {
     // EXP_MINDSTATE: 'explain.mindstate',
     // EXP_MINDSTATE_DETAILED: 'explain.mindstate.detailed',
     //APP INTERNAL STATE
-    WELCOME: 'launch.welcome'
+    WELCOME: 'launch.welcome',
+    FALLBACK: 'input.unknown'
 };
 
 const Topics = {
@@ -266,6 +267,7 @@ Final.prototype.getSentiment = () => {
         modifier = 'kinda'; //Colloquial softening of qualifiers
     }
     var ret = `I'm feeling ${modifier} ${this.sentiment_base} for my ${this.course} ${this.type} so far.`;
+    ret += `I can't afford to mess this up. I have ${this.unit_workload} units riding on this class and I've only been able to get ${LETTER_GRADES[this.letter_grade]} so far not including the final so, yeah...`;
     if (procrast_lvl > 5) {
         ret += getRandomValue(PROCRAST_SIGHS);
     }
@@ -690,7 +692,7 @@ class App extends ApiAiApp {
         };
         let running_context_params = {};
         //   const contextList = this.getContexts();
-        var contextList = getContexts().sort(compareByLifespan);
+        var contextList = this.getContexts().sort(compareByLifespan);
         console.log('Sorted array by lifespans');
         for (let context of contextList) {
             let paramTemp = context.parameters;
@@ -1311,6 +1313,12 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
         return app.tell(retMessage);
     }
 
+    function handleDefault(app){
+        logUserResponse(app);
+
+    }
+
+
     let actionMap = new Map();
     //ACADEMICS MAPPED
     actionMap.set(Actions.GET_ACADEMICS, getAcademics);
@@ -1320,7 +1328,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     actionMap.set(Actions.EXP_ACADEMICS_DETAILED, expAcademicsDetailed);
     actionMap.set(Actions.EXP_ACADEMICS_GOALS, expAcademicsGoals);
     actionMap.set(Actions.EXP_ACADEMICS_FUTURE, expAcademicsFuture);
-
+    actionMap.set(Actions.EXP_ACADEMICS_SENTIMENT, expAcademicsSentiment);
 
     // HOBBIES MAPPED
     actionMap.set(Actions.GET_HOBBIES_DETAILED, getHobbiesDetail);
@@ -1346,5 +1354,6 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     actionMap.set(Actions.EXP_FINALS_STUDYHABIT, expFinalsStudyHabit);
 
     actionMap.set(Actions.WELCOME, launchWelcome);
+    actionMap.set(Actions.FALLBACK, handleDefault);
     app.handleRequest(actionMap);
 });
