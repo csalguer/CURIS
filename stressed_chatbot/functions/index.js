@@ -61,7 +61,7 @@ const Actions = {
 
     //FINALS
     GET_FINALS: 'get.finals',
-    GET_FINAL_DETSPECS: 'get.finals.detailed_specs',
+    GET_FINALS_DETSPECS: 'get.finals.detailed_specs',
     GET_FINALS_DETAILED: 'get.finals.detailed',
     GET_FINALS_DETPROGRESS: 'get.finals.detailed_progress',
     // GET_FINALS_DETSENTIMENT: 'get.finals.detailed_sentiment',
@@ -87,13 +87,22 @@ const Actions = {
 const Topics = {
     ACADEMICS: 'academics',
     HOBBIES: 'hobbies',
+    RELAX: 'relax_method',
     FINALS: 'finals',
     MINDSTATE: 'mindstate'
 };
 
+const getTopicFromAction = action_name => {
+    let root = action_name.split('.')[1];
+    for(let t in Object.values(Topics)){
+        if(root === t) return t;
+    }
+    return null;
+}
+
+
+
 // // API.AI parameter names
-const COURSE_ARG = 'course';
-const HOBBY_ARG = 'hobbies_self';
 const Parameters = {
     COURSE_ARG: 'course',
     HOBBY_ARG: 'hobby',
@@ -112,13 +121,6 @@ const Events = {
 //DEPRECATED: Switched to action since all internal intent names
 //            are the actual action names specified in API.AI console
 //API.AI Intents
-const FINALS_DETAIL_INTENT = 'get_finals_detailed';
-const ACADEMICS_INTENT = 'get_academics';
-const ACADEMICS_DETAIL_INTENT = 'get_academics_detailed';
-const ACADEMICS_FUTURE_INTENT = 'get_academics_future';
-const ACADEMICS_GOALS_INTENT = 'get_academics_goals';
-const HOBBIES_DETAIL_INTENT = 'get_hobbies_detailed';
-const _DETAIL_INTENT = '';
 const Intents = {
     FINALS_DETAIL_INTENT: 'get_finals_detailed',
     ACADEMICS_INTENT: 'get_academics',
@@ -201,17 +203,77 @@ const calculateUserModFactor = input => {
 };
 
 const calcInfluenceFactor = (action_name, user_input) => {
-    return calculateProbingTier(action_name) * calculateUserModFactor(user_input);
+    let initial_factor = calculateProbingTier(action_name) * calculateUserModFactor(user_input);
+    return initial_factor;
 };
 
 
 const modulateAgentResponse = app => {
-    app.initData(); //WORK ON THIS WRITTEN DEFINITION
-    let action = app.getIntent(); //Need to see if always action name for API.AI REQ
+    // app.initData(); //WORK ON THIS WRITTEN DEFINITION
+    let curr_action = app.getIntent(); //Need to see if always curr_action name for API.AI REQ
+    let prev_action = app.data.parameters['prev_action_called']; 
+    assert(prev_action !== null);
     let user_input = app.getRawInput();
-    let mod_factor = calcInfluenceFactor(action, user_input);
+    let topic_influence_prob = calcInfluenceFactor(curr_action, user_input);
+    let probe_jump_dist = Math.abs(calculateProbingTier(prev_action) - calculateProbingTier(curr_action));
 
+    if (probe_jump_dist == 2){
+        topic_influence_prob *= 1.15;
+    }else if (probe_jump_dist == 3){
+        topic_influence_prob *= 1.45;
+    }
+    if(isTopicSwitchTriggered(topic_influence_prob)){
+        //Handle saving the topics "covered" to coalesced array
+        let topic = getTopicFromAction(curr_action);
+        let topics_covered = app.data.parameters['topics_discussed'] ? app.data.parameters['topics_discussed'] : [];
+        topics_covered.push(topic);
+        app.data.parameters['topics_discussed'] = topics_covered;
+        return getDifferentTopic(topic);
+    }
+    return null;
 };
+
+
+const isTopicSwitchTriggered = probability => {
+    return Math.random() <= probability;
+}
+
+const IntentClues = {
+    'explain' : ['how', 'why'],
+    'sentiment' : ['feel', 'feeling', 'felt', 'emotion', 'sentiment'],
+    'detailed' : ['detail', 'complete', 'detailed', 'thorough', 'definite', 'exactly', 'exact', 'comprehensive'],
+    'progress' : ['process', 'move', 'grow', 'advance', 'continue', 'pace'],
+};
+
+
+const getClues = input => {
+    var possibleClues = new Set();
+    Object.entries(IntentClues).forEach( ([key, value]) =>{
+        let clueSet = value;
+        for(let clue in clueSet){
+            if(input.contains(clue)){
+                possibleClues.add(key);
+            }
+        }
+    });
+    console.log(possibleClues);
+    return possibleClues.toArray();
+}
+
+const initData = app => {
+    let running_context = app.coalesceContexts();
+    console.log("Running context as exctraced from app object: ", running_context.parameters)
+    app.data = running_context;
+};
+
+
+const packageData = app => {
+    let running_context = app.data;
+    running_context.parameters['prev_action_called'] = app.getIntent();
+    app.setContext(running_context);
+    //TODO further data packaging for coalesced data
+}
+
 
 const FINALS_TYPE = {
     EXAM: 'exam',
@@ -339,7 +401,9 @@ Final.prototype.explainPlan = () => {
         extra_aside = `I'm gonna have to punt this until more pressing finals are dealt with. I just can't forget about it until last minute...`;
     }
     let date = new Date(this.due_date);
+    console.log('Date Obj:' + date);
     let day_name = date.getDay();
+    console.log('Matched day name: ' + day_name);
     var soonness;
     if (date > 5){
         soonness = 'eventually'
@@ -777,7 +841,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     const app = new App({ request, response });
     console.log('Request headers: ' + JSON.stringify(request.headers));
     console.log('Request body: ' + JSON.stringify(request.body));
-
+    initData();
 
 
     function getAcademics(app) {
@@ -1305,6 +1369,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     }
 
     function launchWelcome(app) {
+        
         logUserResponse(app);
         let welcomeGreeting = app.data.welcomeGreeting ?
             app.data.welcomeGreeting : GREETINGS;
@@ -1315,7 +1380,13 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
 
     function handleDefault(app){
         logUserResponse(app);
-
+        let running_context = app.coalesceContexts();
+        console.log('Checking running_context construction...');
+        Object.entries(running_context).forEach( ([key, value]) => {
+            console.log(`Key: ${key} => ${value}`);
+        });
+        let input = app.getRawInput();
+        if(input)
     }
 
 
