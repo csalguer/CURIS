@@ -841,7 +841,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     const app = new App({ request, response });
     console.log('Request headers: ' + JSON.stringify(request.headers));
     console.log('Request body: ' + JSON.stringify(request.body));
-    initData();
+    // initData(app);
 
 
     function getAcademics(app) {
@@ -892,7 +892,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     }
 
     function expAcademicsFuture(app){
-        const running_context = app.coalesceContexts();
+        // const running_context = app.coalesceContexts();
         logUserResponse(app);
         let AcademicsFutureExp = app.data.AcademicsFutureExp ?
             app.data.AcademicsGoalsResp : ACADEMICS_EXPLANATIONS;
@@ -902,18 +902,18 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
     }
 
     function expAcademicsDetailed(app){
-        const running_context = app.coalesceContexts();
+        // const running_context = app.coalesceContexts();
         logUserResponse(app);
         let AcademicsDetExp = app.data.AcademicsDetExp ?
             app.data.AcademicsGoalsResp : ACADEMICS_EXPLANATIONS_DET;
         var retMessage = getRandomValue(AcademicsDetExp);
         logAgentResponse(app, retMessage);
-        app.setContext(running_context); //USED FOR TESTING CHECK COALESCE
+        // app.setContext(running_context); //USED FOR TESTING CHECK COALESCE
         return app.tell(retMessage);
     }
 
     function expAcademicsSentiment(app){
-        const running_context = app.coalesceContexts(); // HANDLE CONTEXTS HERE
+        // const running_context = app.coalesceContexts(); // HANDLE CONTEXTS HERE
         logUserResponse(app);
         let AcademicsResp = app.data.AcademicsResp ?
             app.data.AcademicsResp : ACADEMICS_RESPONSES;
@@ -951,7 +951,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1001,7 +1001,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1041,7 +1041,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1086,13 +1086,15 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
+        console.log("Coursename: ", courseName);
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
         var finalsList = getFinalsData(courseName, finalsData);
         var ret;
         let finalsPrefix = `I could go on and on about my final for ${courseName}.\n`;
+        console.log("Prefix: ", finalsPrefix);
         if (finalsList.length > 1) {
             finalsPrefix = finalsPrefix.replace("final", "finals");
             ret = finalsPrefix;
@@ -1122,7 +1124,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1158,7 +1160,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1194,7 +1196,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1231,7 +1233,7 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             logAgentResponse(app, retMessage);
             return app.ask(retMessage); //VS ask?
         }
-        var courseName = app.getArgument(COURSE_ARG);
+        var courseName = app.getArgument(Parameters.COURSE_ARG);
         assert(courseName != '', "Empty string found for course_name");
         let finalsData = app.data.finalsData ?
             app.data.finalsData : FINALS_DATA;
@@ -1386,7 +1388,6 @@ exports.stressedChatbot = functions.https.onRequest((request, response) => {
             console.log(`Key: ${key} => ${value}`);
         });
         let input = app.getRawInput();
-        if(input)
     }
 
 
